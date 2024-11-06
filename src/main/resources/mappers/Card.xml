@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oracle.samil.HbDao.CardDao">
+
+	<select id="hbgetCardList" resultType="Card">
+		select  c.cardNum, c.cardBank, c.cardPermit, e.name, d.deptName, c.cardDelGubun
+		From card c, emp e, dept d
+		where e.empno(+) = c.empno
+		AND   d.deptno = e.deptno
+		AND	  c.cardDelGubun != 110
+		Order by e.name
+ 	</select>
+ 	<select id="hbgetCardListAll" resultType="Card">
+ 		select  c.cardNum, c.cardBank, c.cardPermit, e.name, d.deptName, c.cardDelGubun
+		From card c, emp e, dept d
+		where e.empno(+) = c.empno
+		AND   d.deptno = e.deptno
+ 	</select>
+ 	
+	<insert id="hbcardAdd" parameterType="Card">
+	    insert into card (cardNum, cardBank, empno, cardDelGubun)
+	    values (#{cardNum}, #{cardBank}, #{empno}, #{cardDelGubun})
+	</insert>
+	
+	<select id="hbgetCardUseList" resultType="CardUse">
+	    SELECT cu.cardNum, cu.place, e.name, 
+	           d.deptName, cu.usedate, c.empno, cu.cardCost, cu.useNum
+	    FROM card c
+	    LEFT JOIN emp e ON c.empno = e.empno
+	    JOIN cardUse cu ON cu.cardNum = c.cardNum
+	    JOIN dept d ON d.deptno = e.deptno
+	    ORDER BY cu.usedate DESC
+	</select>
+	<select id="hbgetCardDetails" parameterType="Card" resultType="Card">
+     	SELECT c.*, e.*, d.deptName
+    	FROM Card c,  Emp e, dept d
+   		Where c.empno = e.empno
+   		AND e.deptno = d.deptno
+    	and c.cardNum = #{cardNum}
+	</select>
+
+	<select id="hbgetMaxUseNum" resultType="int">
+	 SELECT COALESCE(MAX(useNum), 0) FROM CardUse
+	</select>
+		
+	<insert id="hbcardUseAdd" parameterType="CardUse">
+	 INSERT INTO cardUse (useNum, cardNum, cardCost, place, useDate, cardPaper )
+	 VALUES (#{useNum}, #{cardNum}, #{cardCost}, #{place}, #{useDate}, #{cardPaper})
+	</insert>
+
+ 	
+	<select id="hbsearchCard" parameterType="CardUse" resultType="CardUse">
+		SELECT 
+		    cu.useNum, 
+		    cu.cardNum, 
+		    cu.cardCost, 
+		    cu.place, 
+		    cu.useDate, 
+		    cu.cardPaper, 
+		    e.name, 
+		    e.deptno, 
+		    c.cardBank, 
+		    c.cardPermit, 
+		    c.cardLostDate,
+		    d.deptName
+		FROM 
+		    CardUse cu
+		Inner JOIN 
+		    Card c ON cu.cardNum = c.cardNum
+		Inner JOIN 
+		    emp e ON c.empno = e.empno 
+		Inner JOIN
+			dept d ON e.deptno = d.deptno
+		WHERE 
+		    ( 
+		        (#{search} = 'cardNum' AND cu.cardNum LIKE '%' || #{keyword} || '%') OR
+		        (#{search} = 'name' AND e.name LIKE '%' || #{keyword} || '%') OR
+		        (#{search} = 'deptName' AND d.deptName LIKE '%' || #{keyword} || '%') OR
+		        (#{search} = 'useDate' AND cu.useDate LIKE '%' || #{keyword} || '%')
+		    )
+		ORDER BY 
+		    cu.useDate DESC
+	</select>
+
+	<update id="hbupdateCardPermit" parameterType="Card">
+	    UPDATE card
+	    SET cardPermit = 110,
+	        cardLostDate = #{cardLostDate}  <!-- 변경 -->
+	    WHERE cardNum = #{cardNum}
+	</update>
+	
+	<update id="hbupdateCardDelGubun" parameterType="Card">
+	    UPDATE card
+	    SET CardDelGubun = 110,
+	        CardDelDate = #{cardDelDate}
+	    WHERE cardNum = #{cardNum}
+	</update>
+	<select id="hbgetAllCardUse" parameterType="int" resultType="int">
+		Select COUNT(USENUM) as CardUseNum
+		FROM CardUse
+	
+	</select>
+
+
+</mapper>
+

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.oracle.samil.HsDao.HsCalDao">
+	
+	<!-- 회사일정 -->
+	<select id="hsEventComp" parameterType="CalTotal" resultType="CalTotal">
+		<![CDATA[
+			SELECT *
+			FROM event
+			WHERE eventCategory=100
+			AND TRUNC(SYSTIMESTAMP) BETWEEN TRUNC(eventStartdate) AND TRUNC(eventEnddate)
+	    ]]>
+	</select>
+	
+	<select id="hsEventCategory" parameterType="Event" resultType="CalTotal">
+		SELECT DISTINCT	eventCategory
+		FROM event
+		ORDER BY eventCategory
+	</select>
+	
+	<select id="hsEventListAll" parameterType="map" resultType="CalTotal">
+		<![CDATA[
+			SELECT DISTINCT
+		        e.eventId,
+		        e.eventTitle,
+		        e.eventWriter,
+		        e.eventStartdate,
+	       		e.eventEnddate,
+		        e.eventCategory,
+		        e.eventLoc,
+		        e.eventMemo,
+		        e.eventDelete
+		    FROM event e
+		    Left JOIN attendee a ON e.eventId=a.eventId
+		    WHERE e.eventDelete=100
+		    AND e.eventCategory=#{eventCategory}
+		    AND (e.eventWriter = #{empno} OR (a.attendId = #{empno} AND a.attendres=110))
+		    AND TRUNC(SYSTIMESTAMP) BETWEEN TRUNC(e.eventStartdate) AND TRUNC(e.eventEnddate)		
+		    ORDER BY e.eventStartdate, e.eventId
+	    ]]>
+	</select>
+	
+	<select id="hsEventSelOne" parameterType="map" resultType="CalTotal">
+		SELECT 
+		    e.eventId,
+		    e.eventTitle,
+		    e.eventWriter,
+		    e.eventStartdate,
+		    e.eventEnddate,
+		    e.eventCategory,
+		    e.eventLoc,
+		    e.eventMemo,
+		    e.eventDelete,
+		    a.attendId,
+		    a.attendRsvp,
+		    a.attendRes
+		FROM event e
+		LEFT JOIN attendee a ON e.eventId = a.eventId AND a.attendId =#{empno}
+		WHERE e.eventId = #{eventId}
+	</select>
+	
+	<update id="hsEventUpdate" parameterType="Event">
+		UPDATE  event 
+		SET		eventTitle=#{eventTitle},
+		    	eventLoc=#{eventLoc}, 
+		    	eventMemo=#{eventMemo}, 
+		    	eventStartdate=#{eventStartdate}, 
+				eventEnddate=#{eventEnddate}
+		WHERE 	eventId=#{eventId}
+	</update>
+	
+	<insert id="hsEventInsert" parameterType="CalTotal">
+		INSERT INTO event(eventId, 
+						  eventTitle,
+						  eventWriter,
+						  eventStartdate, 
+						  eventEnddate, 
+						  eventCategory, 
+						  eventMemo, 
+						  eventLoc,
+						  eventDelete)
+		VALUES(event_seq.nextval, 
+			   #{eventTitle},
+			   #{eventWriter},
+			   #{eventStartdate}, 
+			   #{eventEnddate}, 
+			   #{eventCategory}, 
+			   #{eventMemo}, 
+			   #{eventLoc}, 
+			   #{eventDelete})
+	</insert>
+	
+	<select id="hsCurEventId" resultType="int">
+		SELECT event_seq.currval
+		FROM dual
+	</select>
+	
+	<delete id="hsEventDelete" parameterType="int">
+		DELETE FROM event
+		WHERE eventId=#{eventId}
+	</delete>
+	
+	<update id="hseventRestore" parameterType="Event">
+		UPDATE  event
+		SET		eventDelete=#{eventDelete},
+				eventDelDate=null
+		WHERE 	eventId=#{eventId}
+	</update>
+	
+	<update id="hsEventDelupt" parameterType="Event">
+		UPDATE  event
+		SET		eventDelete=#{eventDelete},
+				eventDelDate=SYSDATE
+		WHERE 	eventId=#{eventId}
+	</update>
+	
+	<select id="hsEventListDel" parameterType="Event" resultType="Event">
+		SELECT *
+		FROM event
+		WHERE eventDelete=110
+		AND eventWriter=#{eventWriter}
+	</select>
+	
+	<select id="hsEventAdSelOne" parameterType="int" resultType="CalTotal">
+		SELECT *
+		FROM event
+		WHERE eventId = #{eventId}
+	</select>
+	
+	<select id="hsCalVacIns" parameterType="ApprovalDto" statementType="CALLABLE">
+		{
+			call approvalevent(
+						 #{documentFormId,	mode=IN	, jdbcType=INTEGER}
+						,#{approvalNum, 	mode=IN	, jdbcType=INTEGER}		
+			)
+		}
+	</select>
+</mapper>

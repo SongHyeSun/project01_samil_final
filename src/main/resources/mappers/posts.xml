@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+ <mapper namespace="com.oracle.samil.postsMapper">
+
+
+ 	<select id="listPosts" parameterType="Posts" resultType="Posts">
+	    SELECT *
+	    FROM (
+	        SELECT postId, creationDate, postsTitle,isPinned, ROWNUM AS rn
+	        FROM (
+	            SELECT postId, creationDate, postsTitle ,isPinned
+	            FROM posts
+	            WHERE boardid = 100
+	            ORDER BY creationDate DESC
+	        )
+	    )
+	    WHERE rn BETWEEN #{start} AND #{end}
+	</select>
+
+
+ 	<select id="totalPosts" resultType="int">
+ 		select count(*)
+ 		from posts
+ 		where boardid = 100
+    </select>
+    
+    
+	<select id="searchlist" parameterType="Posts" resultType="Posts">
+	    SELECT postId, creationDate, postsTitle, rn
+	    FROM (
+	        SELECT rownum AS rn, a.*
+	        FROM (
+	            SELECT postId, creationDate, postsTitle, empno
+	            FROM posts
+	            <choose>
+	                <when test="search == 'title'">
+	                    WHERE postsTitle LIKE '%' || #{keyword} || '%'
+	                </when>
+	                <when test="search == 'content'">
+	                    WHERE postsCnt LIKE '%' || #{keyword} || '%'
+	                </when>
+	                <when test="search == 'author'">
+	                    WHERE empno LIKE '%' || #{keyword} || '%'
+	                </when>
+	              
+	            </choose>
+	            ORDER BY empno
+	        ) a
+	    )
+	    WHERE rn BETWEEN #{start} AND #{end}
+	</select>
+
+     	
+
+ 	 <select id="totalSearchPosts3" parameterType="Posts" resultType="int">
+        SELECT COUNT(*)
+        FROM   posts
+	    <choose>
+            <when test="search == 'title'">
+                WHERE postsTitle like  '%' || #{keyword} || '%'
+            </when>
+            <when test="search == 'content'">
+                WHERE postsCnt LIKE '%' || #{keyword} || '%'
+            </when>
+            <when test="search == 'author'">
+                WHERE empno LIKE '%' || #{keyword} || '%'
+            </when>
+            <otherwise>
+                WHERE postsTitle LIKE '%'
+            </otherwise>
+	    </choose>
+     </select>
+     
+     <select id="detailPosts" parameterType="Map" resultType="Posts">
+	    SELECT p.*, e.name 
+	    FROM posts p
+	    JOIN emp e ON p.empno = e.empno
+	    WHERE p.postId = #{postId}
+	</select>
+     
+
+	 	
+     	<select id="postslists2" parameterType="Posts" resultType="Posts">
+	 		select *
+	 		from posts
+	 		WHERE boardid = 110
+	 	
+	 	</select>
+	 	
+	  <select id="postslists1" parameterType="Posts" resultType="Posts">
+	 		select postId,creationDate,postsTitle
+	 		from posts
+	 		WHERE boardid = 120
+	 	
+	 	</select>
+	 	
+	 	<select id="totalPosts1" resultType="int">
+ 		select count(*) 
+ 		from posts
+ 		where boardid = 120
+    </select>
+    
+    <select id="listPosts1" parameterType="Posts" resultType="Posts">
+	    SELECT *
+	    FROM (
+	        SELECT postId, creationDate, postsTitle, ROWNUM AS rn
+	        FROM (
+	            SELECT postId, creationDate, postsTitle
+	            FROM posts
+	            WHERE boardid = 120
+	            ORDER BY postId DESC
+	        )
+	    )
+	    WHERE rn BETWEEN #{start} AND #{end}
+	</select>
+	
+
+     
+	    <select id="faqsearch" parameterType="Posts" resultType="Posts">
+	    SELECT postId, creationDate, postsTitle, rn
+	    FROM (
+	        SELECT rownum AS rn, a.*
+	        FROM (
+	            SELECT postId, creationDate, postsTitle, empno
+	            FROM posts
+	            WHERE boardId = 120
+	            <choose>
+	                <when test="search == 'title'">
+	                    AND postsTitle LIKE '%' || #{keyword} || '%'
+	                </when>
+	                <when test="search == 'content'">
+	                    AND postsCnt LIKE '%' || #{keyword} || '%'
+	                </when>
+	                <when test="search == 'author'">
+	                    AND empno LIKE '%' || #{keyword} || '%'
+	                </when>
+	            </choose>
+	            ORDER BY empno
+	        ) a
+	    )
+	    WHERE rn BETWEEN #{start} AND #{end}
+	</select>
+	
+	<select id="freetotalPosts" resultType="int">
+ 		select count(*) 
+ 		from posts
+ 		where boardid = 110
+    </select>
+    
+	  <select id="freelistPosts" parameterType="Posts" resultType="Posts">
+	    SELECT *
+	    FROM (
+	        SELECT postId, name, creationDate, postsTitle, postsViews,ref,relevel,restep,ROWNUM AS rn
+	        FROM (
+	            SELECT p.postId, e.name, p.creationDate, p.postsTitle, p.postsViews ,p.ref, p.relevel, p.restep
+	            FROM posts p
+	            join emp e ON e.empno =p.empno
+	            WHERE boardid = 110
+	            ORDER BY ref DESC, reStep ASC, postId DESC
+	        )
+	    )
+	    WHERE rn BETWEEN #{start} AND #{end}
+	</select>
+
+		<select id="freesearchtotal" parameterType="Posts" resultType="int">
+        SELECT COUNT(*)
+        FROM   posts
+	    <choose>
+            <when test="search == 'title'">
+                WHERE postsTitle like  '%' || #{keyword} || '%'
+            </when>
+            <when test="search == 'content'">
+                WHERE postsCnt LIKE '%' || #{keyword} || '%'
+            </when>
+            <when test="search == 'author'">
+                WHERE empno LIKE '%' || #{keyword} || '%'
+            </when>
+            <otherwise>
+                WHERE postsTitle LIKE '%'
+            </otherwise>
+	    </choose>
+     </select>
+     
+	<select id="freesearch" parameterType="Posts" resultType="Posts">
+	    SELECT *
+	    FROM (
+	        SELECT rownum AS rn, a.*
+	        FROM (
+	            SELECT p.postId, p.creationDate, p.postsTitle, p.postsViews, e.name
+	            FROM posts p
+	            JOIN emp e ON p.empno = e.empno
+	            WHERE p.boardId = 110
+	            <choose>
+	                <when test="search == 'title'">
+	                    AND p.postsTitle LIKE '%' || #{keyword} || '%'
+	                </when>
+	                <when test="search == 'content'">
+	                    AND p.postsCnt LIKE '%' || #{keyword} || '%'
+	                </when>
+	                <when test="search == 'author'">
+	                    AND e.name LIKE '%' || #{keyword} || '%'
+	                </when>
+	            </choose>
+	            ORDER BY e.name
+	        ) a
+	    )
+	    WHERE rn BETWEEN #{start} AND #{end}
+</select>
+	
+	<update id="increaseViewCount" parameterType="int">
+		    UPDATE posts
+		    SET postsViews = COALESCE(postsViews, 0) + 1
+		    WHERE postId = #{postId}
+	</update>
+	
+	
+		<insert id="writePost" parameterType="Posts">
+		    INSERT INTO posts (postId, empno, postsTitle, postsCnt, fileName, boardId, creationDate)
+		    VALUES (
+		        posts_seq.NEXTVAL, 
+		        #{empno}, 
+		        #{postsTitle}, 
+		        #{postsCnt}, 
+		        <if test="fileName != null">#{fileName}</if>
+		        <if test="fileName == null">NULL</if>, 
+		        100, 
+		        sysdate
+		    )
+		</insert>
+	
+	  <delete id="iiii" parameterType="int">
+    	delete from posts
+    	where postId=#{postId}
+    	</delete>
+    	
+    	   <update id="postsupdate" parameterType="Posts">
+		    UPDATE posts 
+		    SET 
+		        empno = #{empno},
+		        postsTitle = #{postsTitle},
+		        postsCnt = #{postsCnt},
+		        isPinned = #{isPinned},
+		        postsViews = #{postsViews},
+		        fileName =  #{fileName},
+		        creationDate = sysdate
+		    WHERE postId = #{postId}
+		</update>
+    
+
+		<insert id="writeFaq" parameterType="Posts">
+		    INSERT INTO posts (postId, empno, postsTitle, postsCnt, fileName, boardId, creationDate)
+		    VALUES (
+		        posts_seq.NEXTVAL, 
+		        #{empno}, 
+		        #{postsTitle}, 
+		        #{postsCnt}, 
+		        <if test="fileName != null">#{fileName}</if>
+		        <if test="fileName == null">NULL</if>, 
+		        120, 
+		        sysdate
+		    )
+		</insert>
+	
+		<insert id="writeFree" parameterType="Posts">
+		    INSERT INTO posts (postId, empno, postsTitle, postsCnt, boardId, creationDate, ref, reStep, reLevel, fileName)
+		    VALUES (
+		        posts_seq.NEXTVAL,
+		        #{empno}, 
+		        #{postsTitle}, 
+		        #{postsCnt}, 
+		        110, 
+		        SYSDATE, 
+		        posts_seq.NEXTVAL, 
+		        0, 
+		        0,
+				#{fileName}
+		    )
+		</insert>
+	
+		<select id="listPosts4" parameterType="Posts" resultType="Posts">
+			select *
+			from posts
+			WHERE boardid = 100
+			
+			ORDER BY creationDate DESC
+	</select>
+
+
+	
+    <update id="replySeqUpdate" parameterType="Posts">
+    UPDATE posts
+    SET reStep = reStep + 1
+  	  WHERE ref = #{ref}
+      AND reStep > #{reStep}
+	</update>
+	
+	<insert id="replyfree1" parameterType="Posts">
+	 	insert into posts(postId,empno,boardId,postsTitle,postsCnt,creationDate,ref,reStep,reLevel)
+	 	values(posts_seq.NEXTVAL,#{empno},110,#{postsTitle},#{postsCnt},sysdate,#{ref},#{reStep},#{reLevel})
+	</insert>
+
+
+
+	
+	 <select id="parentreply" parameterType="int" resultType="Posts">
+		    SELECT * 
+		    FROM posts
+		    WHERE postId = #{postId}
+		    AND boardId = 110
+	</select>
+	
+	<select id="listPostss" parameterType="Posts" resultType="Posts">
+	    SELECT *
+	    FROM (
+	        SELECT postId, creationDate, postsTitle, isPinned, ROWNUM AS rn
+	        FROM (
+	            SELECT postId, creationDate, postsTitle, isPinned
+	            FROM posts
+	            WHERE boardid = 100 AND isPinned = 1
+	            ORDER BY creationDate DESC
+	        )
+	    )
+	    WHERE rn BETWEEN #{start} AND #{end}
+	</select>
+	
+     
+	
+     
+
+</mapper>

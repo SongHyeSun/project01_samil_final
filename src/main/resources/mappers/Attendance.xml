@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace = "com.oracle.samil.Amodel.AttendanceMapper">
+	<select id="heGetAttRecords" parameterType="Attendance" resultType="Attendance">
+		SELECT *
+		FROM (
+			SELECT	e.empno, e.name, a.workDate, a.clockIn, a.clockOut, a.overTime, a.attStatus, 
+					a.editCheck, a.editWho, a.editWhen,
+					ROW_NUMBER() OVER (ORDER BY a.workDate) AS rn
+			FROM	attendance a
+			JOIN	emp e ON a.empno = e.empno
+			WHERE	e.empno = #{empno}
+			<if test="month != null and month != ''">
+			AND		SUBSTR(a.workDate, 5, 2) = #{month}
+			</if>
+			<if test="startDate != null and startDate != ''">
+			AND		a.workDate >= #{startDate}
+			</if>
+			<if test="(startDate != null and startDate != '') and (endDate != null and endDate != '')">
+			AND		a.workDate BETWEEN #{startDate} AND #{endDate}
+			</if>
+		)
+		WHERE rn BETWEEN #{start} AND #{end}
+	</select>
+	<select id="heGetTotMyAttRecords" parameterType="Attendance" resultType="int">
+		SELECT	COUNT(*)
+		FROM	attendance a
+		JOIN	emp e ON a.empno = e.empno
+		WHERE	e.empno = #{empno}
+		<if test="month != null and month != ''">
+		AND		SUBSTR(a.workDate, 5, 2) = #{month}
+		</if>
+		<if test="startDate != null and startDate != ''">
+		AND		a.workDate >= #{startDate}
+		</if>
+		<if test="(startDate != null and startDate != '') and (endDate != null and endDate != '')">
+		AND		a.workDate BETWEEN #{startDate} AND #{endDate}
+		</if>
+	</select>
+	<select id="heMyLeaveList" parameterType="int" resultType="LeaveDto">
+		SELECT		e.name, a.approvalTitle, a.approvalNum, a.approvalCondition, f.documentFormId,
+					f.furloughServiceData, f.furloughStartDate, f.furloughEndDate
+		FROM		furloughDetails f
+		JOIN		approval a ON f.approvalnum = a.approvalnum
+		JOIN		emp e ON a.empno = e.empno
+		WHERE		e.empno = #{empno}
+		ORDER BY	f.furloughStartDate
+	</select>
+	<select id="heGetDeptAttRecords" parameterType="Attendance" resultType="Attendance">
+		SELECT		e.empno, e.name, e.admin, e.job, d.deptName,
+					a.workDate, a.clockIn, a.clockOut, a.overTime, a.attStatus, a.editCheck, a.editWho, a.editWhen,
+					e2.name AS editWhoName
+		FROM		attendance a
+		JOIN		emp e ON a.empno = e.empno
+		JOIN		dept d ON e.deptno = d.deptno
+		LEFT JOIN	emp e2 ON e2.empno = a.editWho
+		WHERE		e.status != 150
+	<if test="admin != 170">
+		AND			e.deptno = #{deptno}
+	</if>
+	<if test="name != null and name != ''">
+		AND			e.name LIKE '%' || #{name} || '%'
+	</if>
+	<if test="deptName != null and name != ''">
+		AND			d.deptName LIKE '%' || #{deptName} || '%'
+	</if>
+	<if test="attStatus != null and attStatus != ''">
+		AND			a.attStatus = #{attStatus}
+	</if>
+	<if test="month != null and month != ''">
+		AND			SUBSTR(a.workDate, 5, 2) = #{month}
+	</if>
+	<if test="startDate != null and startDate != ''">
+		AND			a.workDate >= #{startDate}
+	</if>
+	<if test="(startDate != null and startDate != '') and (endDate != null and endDate != '')">
+		AND			a.workDate BETWEEN #{startDate} AND #{endDate}
+	</if>
+		ORDER BY	e.deptno, a.workDate
+	</select>
+	<select id="heAdminDeptLeave" parameterType="LeaveDto" resultType="LeaveDto">
+		SELECT		e.empno, e.name, e.deptno, e.totalVacation, e.restVacation, d.deptName,
+					a.approvalNum, a.approvalTitle, a.approvalCondition, f.documentFormId,
+					f.furloughServiceData, f.furloughStartDate, f.furloughEndDate
+		FROM		furloughDetails f
+		JOIN		approval a ON f.approvalnum = a.approvalnum
+		JOIN		emp e ON a.empno = e.empno
+		JOIN		dept d ON e.deptno = d.deptno
+		<where>
+			<if test="admin != 170">
+				AND		e.deptno = #{deptno}
+			</if>
+		</where>
+	<if test="name != null and name != ''">
+		AND			e.name LIKE '%' || #{name} || '%'
+	</if>
+	<if test="deptName != null and deptName != ''">
+		AND			d.deptName LIKE '%' || #{deptName} || '%'
+	</if>
+	<if test="approvalCondition != null and approvalCondition > 0">
+		AND			a.approvalCondition = #{approvalCondition}
+	</if>
+		ORDER BY	e.deptno, f.furloughStartDate
+	</select>
+	<insert id="heInsertClockIn" parameterType="map">
+		INSERT INTO	attendance (empno, workDate, clockIn, clockOut, editCheck)
+		VALUES		(#{empno}, #{workDate}, #{clockIn}, #{clockOut}, 0)
+	</insert>
+	<update id="heUpdateClockOut" parameterType="map">
+		UPDATE	attendance
+		SET		clockOut = #{clockOut}
+		WHERE	empno = #{empno} AND workDate = #{workDate}
+	</update>
+	<select id="heUpdateAttStatus" statementType="CALLABLE">
+		{ CALL updateAttStatus }
+	</select>
+	<insert id="heGetOverTime" statementType="CALLABLE">
+		{ CALL GetOverTime }
+	</insert>
+	<select id="heFindById" parameterType="Attendance" resultType="Attendance">
+		SELECT	e.empno, e.name, d.deptName,
+				a.workDate, a.clockIn, a.clockOut, a.overTime, a.attStatus
+		FROM	attendance a
+		JOIN	emp e ON e.empno = a.empno
+		JOIN	dept d ON d.deptno = e.deptno
+		WHERE	a.empno = #{empno}
+		AND		a.workDate = #{workDate}
+	</select>
+	<update id="heUpdateAttendance" parameterType="Attendance">
+		UPDATE	attendance
+		SET		clockIn = #{clockIn}, clockOut = #{clockOut},
+				editCheck = #{editCheck}, editWho = #{editWho}, editWhen = #{editWhen}
+		WHERE	empno = #{empno}
+		AND		workDate = #{workDate}
+	</update>
+</mapper>

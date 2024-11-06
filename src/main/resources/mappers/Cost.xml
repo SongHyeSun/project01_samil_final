@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oracle.samil.Amodel.CostCodeCost">
+
+    <select id="hbgetCostList" resultType="com.oracle.samil.Adto.CostCodeCost">
+        SELECT 
+            c.*,
+            cc.codeName,
+            e.empno,
+            e.name,
+            e.deptno,
+            d.deptName
+        FROM 
+            Cost c
+            JOIN COSTCODE cc ON c.codenum = cc.codenum
+            JOIN Emp e ON c.empno = e.empno
+            JOIN DEPT d ON e.deptno = d.deptno
+        ORDER BY 
+        	c.costStatus,
+        	c.costYear desc
+    </select>
+
+    <select id="hbgetcostCode" resultType="costCode">
+        SELECT *
+        FROM costCode
+        where codeDel = 0
+        ORDER BY codeNum
+    </select>
+    
+    <select id="hbadmingetcostCode" resultType="costCode">
+        SELECT *
+        FROM costCode
+        ORDER BY codeDel, codeNum
+    </select>
+    
+
+    <select id="hbadminSearchCost" parameterType="com.oracle.samil.Adto.CostCodeCost" resultType="com.oracle.samil.Adto.CostCodeCost">
+    SELECT * 
+    FROM 
+    ( 
+        SELECT ROWNUM rn, a.* 
+        FROM 
+        (
+            SELECT c.*, cc.codeName, e.name, d.deptName
+            FROM Cost c
+            JOIN COSTCODE cc ON c.codenum = cc.codenum
+            JOIN Emp e ON c.empno = e.empno
+            JOIN DEPT d ON d.deptno = e.deptno
+            WHERE c.costStatus = 100 
+            <if test="search != null and search != ''">
+                AND (
+                    <choose>
+                        <when test="search == 'name'">
+                            e.name LIKE '%' || #{keyword} || '%'
+                        </when>
+                        <when test="search == 'codeName'">
+                            cc.codeName LIKE '%' || #{keyword} || '%'
+                        </when>
+                        <otherwise>
+                            1=1
+                        </otherwise>
+                    </choose>
+                )
+            </if>
+            ORDER BY costYear DESC
+        ) a
+    )
+</select>
+
+
+    <select id="hbsearchCost" parameterType="com.oracle.samil.Adto.CostCodeCost" resultType="com.oracle.samil.Adto.CostCodeCost">
+        SELECT *
+        FROM (
+            SELECT ROWNUM rn, a.*
+            FROM (
+                SELECT c.*, cc.codeName, e.name AS name, e.deptno, d.deptName
+                FROM Cost c
+                JOIN COSTCODE cc ON c.codenum = cc.codenum
+                JOIN Emp e ON c.empno = e.empno
+                JOIN DEPT d on d.deptno = e.deptno
+                <where>
+                    <choose>
+                        <when test="search == 'name'">
+                            e.name LIKE '%' || #{keyword} || '%'
+                        </when>
+                        <when test="search == 'codeName'">
+                            cc.codeName LIKE '%' || #{keyword} || '%'
+                        </when>
+                    </choose>
+                    <if test="costStatus != null and costStatus != ''">
+                        AND c.costStatus = #{costStatus} <!-- Filter by status -->
+                    </if>
+                </where>
+                ORDER BY c.costYear DESC
+            ) a
+        )
+    </select>
+
+    <select id="hbgetMaxCodeNum" resultType="int">
+        SELECT MAX(codeNum) FROM costCode
+    </select>
+
+    <select id="hbgetAdminCost" resultType="com.oracle.samil.Adto.CostCodeCost">
+        SELECT 
+            c.*,
+            cc.codeName,
+            e.empno,
+            e.name,
+            e.deptno,
+            d.deptName
+        FROM 
+            Cost c
+            JOIN COSTCODE cc ON c.codenum = cc.codenum
+            JOIN Emp e ON c.empno = e.empno
+            Join Dept d on d.deptno = e.deptno
+        WHERE c.costStatus = 100
+        ORDER BY 
+            c.costYear DESC
+    </select>
+
+    <insert id="hbcostCodePlus" parameterType="com.oracle.samil.Adto.CostCodeCost">
+        INSERT INTO costCode (codeNum, codeName, codeDel)
+        VALUES (#{codeNum}, #{codeName}, #{codeDel})
+    </insert>
+
+    <update id="hbcostCodeUnActive" parameterType="int">
+        Update costCode
+        SET codeDel = 1
+        WHERE codeNum = #{codeNum}
+    </update>
+    
+    <update id="hbcostCodeActive" parameterType="int">
+        Update costCode
+        SET codeDel = 0
+        WHERE codeNum = #{codeNum}
+    </update>
+
+    <select id="hbgetCodeNameByCodeNum" parameterType="int" resultType="String">
+        SELECT codeName
+        FROM costCode
+        WHERE codeNum = #{codeNum}
+    </select>
+
+    <insert id="hbinsertCost" parameterType="com.oracle.samil.Adto.CostCodeCost">
+        INSERT INTO Cost (costTitle, costMoney, codeNum, empno, attach, signdate, costStatus)
+        VALUES (#{costTitle}, #{costMoney}, #{codeNum}, #{empno}, #{attach}, #{signdate, jdbcType=TIMESTAMP}, #{costStatus})
+    </insert>
+
+    <select id="hbgetcostDetail" parameterType="com.oracle.samil.Adto.CostCodeCost" resultType="com.oracle.samil.Adto.CostCodeCost">
+      SELECT 
+            c.*,
+            cc.codeName,
+            e.empno,
+            e.name,
+            e.deptno,
+            d.deptName
+        FROM 
+            Cost c
+            JOIN COSTCODE cc ON c.codenum = cc.codenum
+            JOIN Emp e ON c.empno = e.empno
+            Join dept d on e.deptno = d.deptno
+        WHERE cc.codeNum = c.codenum
+        AND c.costTitle = #{costTitle}
+    </select>
+
+    <update id="hbupdateStatus" parameterType="Map">
+        UPDATE Cost
+        SET costStatus = #{costStatus}
+        WHERE costTitle = #{costTitle}
+        AND	  costYear  = #{costYear}
+    </update>
+    
+    <select id="hbgetAllCost" parameterType="int" resultType="int">
+    	SELECT SUM(costMoney) AS totalCost 
+    	FROM cost
+    </select>
+</mapper>

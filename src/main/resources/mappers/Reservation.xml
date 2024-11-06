@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.oracle.samil.HsDao.HsResDao">
+	<select id="hsResListLoad" parameterType="ResTotal" resultType="ResTotal">
+		SELECT  r.resCode,
+				r.facilId,
+				r.resStart,
+				r.resEnd,
+				r.resContent,
+				r.resWriter,
+				r.resTel,
+				r.resRequest,
+				r.resState,
+				f.facilType,
+				f.facilName
+		FROM Reservation r
+		LEFT JOIN Facility f ON r.facilId = f.facilId
+		WHERE r.resState=100
+		AND r.resWriter=#{resWriter}
+	</select>
+	
+	<insert id="hsReserInsert" parameterType="ResTotal">
+		INSERT INTO reservation(resCode, 
+								facilId,
+								resWriter,
+								resStart, 
+								resEnd, 
+								resTel, 
+								resContent, 
+								resRequest, 
+								resState)
+		VALUES(reserv_seq.nextval, 
+			   #{facilId},
+			   #{resWriter},
+			   #{resStart}, 
+			   #{resEnd}, 
+			   #{resTel}, 
+			   #{resContent}, 
+			   #{resRequest}, 
+			   #{resState})
+	</insert>
+	
+	<update id="hsupdateReserv" parameterType="ResTotal">
+		UPDATE  reservation
+		SET		resCode=#{resCode},
+				facilId=#{facilId},
+				resStart=#{resStart},
+				resEnd=#{resEnd},
+				resTel=#{resTel},
+				resContent=#{resContent},
+				resRequest=#{resRequest}
+		WHERE	resCode=#{resCode}
+	</update>
+	
+	<select id="hsResSelOne" parameterType="int" resultType="Reservation">
+		SELECT *
+		FROM reservation
+		WHERE resCode=#{resCode}
+	</select>
+	
+	<delete id="hsResDelete" parameterType="int">
+		DELETE FROM reservation
+		WHERE resCode=#{resCode}
+	</delete>
+	
+	<select id="hsResListAppr" parameterType="ResTotal" resultType="ResTotal">
+		SELECT  r.resCode,
+				r.facilId,
+				r.resStart,
+				r.resEnd,
+				r.resWriter,
+				r.resTel,
+				r.resContent,
+				r.resRequest,
+				r.resState,
+				e.name,
+				e.grade,
+				f.facilType,
+				f.facilName
+		FROM reservation r
+		JOIN emp e ON e.empno=r.resWriter
+		JOIN facility f ON f.facilID=r.facilID
+		WHERE r.resState=100
+		ORDER BY r.resCode
+	</select>
+</mapper>

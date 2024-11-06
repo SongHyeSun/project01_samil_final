@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.oracle.samil.MailMapper">
+	<select id="trGetMailList" resultType="Mail">
+		SELECT * FROM Mail where
+		empno=#{empno} and (mailtype = 110 or mailtype = 120)
+		order by mailno
+		desc
+	</select>
+	<select id="trGetReadMailList" resultType="Mail">
+		SELECT * FROM Mail
+		where
+		empno=#{empno} and mailtype = 110
+		order by mailno desc
+	</select>
+	<select id="trGetNotReadMailList" resultType="Mail">
+		SELECT * FROM Mail
+		where
+		empno=#{empno} and mailtype = 120
+		order by mailno desc
+	</select>
+	<select id="trGetImportantMailList" resultType="Mail">
+		SELECT * FROM
+		Mail where
+		empno=#{empno} and important = 1
+		order by mailno desc
+	</select>
+	<select id="trGetSendMailList" resultType="Mail">
+		SELECT * FROM Mail
+		where
+		empno=#{empno} and mailtype = 130
+		order by mailno desc
+	</select>
+	<select id="trGetTrashMailList" resultType="Mail">
+		SELECT * FROM Mail
+		where
+		empno=#{empno} and mailtype = 150 
+		order by mailno desc
+	</select>
+	<select id="trGetMailDetail" resultType="Mail">
+		SELECT * FROM Mail where
+		mailno = #{mailNo}
+	</select>
+	<select id="trChangeToRead">
+		UPDATE mail set mailtype = 110,
+		mailread = 1 where mailno=#{mailNo} and mailread = 0
+	</select>
+	<select id="trMailDelete">
+		UPDATE mail set mailtype = 150 where
+		mailno=#{mailNo}
+	</select>
+
+	<select id="trSearchEmpDeptMail" resultType="EmpDept">
+		SELECT * FROM Emp
+		INNER JOIN dept
+		on emp.deptno = dept.deptno WHERE name like '%' ||
+		#{keyword} || '%'
+	</select>
+	<select id="trSendMailforMe" parameterType="Mail">
+		INSERT INTO mail
+		(empno, mailno, sendaddress, mailcnt, mailTitle,
+		mailType,mailread,senddate)
+		values (#{empno} , mail_seq.nextval,
+		#{sendAddress}, #{mailCnt}, #{mailTitle}, 130,2,sysdate )
+	</select>
+	<select id="trSendMailforYou" parameterType="Mail">
+		INSERT INTO mail
+		(empno, mailno, sendaddress, mailcnt, mailTitle,
+		mailType,mailread,senddate)
+		values (#{sendAddress} , mail_seq.nextval,
+		#{empno}, #{mailCnt}, #{mailTitle}, 120,0,sysdate )
+	</select>
+	<select id="trImportantMailCheck" parameterType="int">
+		UPDATE mail
+		SET important = DECODE(important, 1, 0, 1)
+		WHERE mailno = #{mailNo}
+	</select>
+	<select id="trDeleteMailReal" >
+		delete from mail
+		where mailno = #{mailNo}
+	</select>
+</mapper>

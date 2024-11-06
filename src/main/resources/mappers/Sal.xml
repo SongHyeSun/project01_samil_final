@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oracle.samil.salDao">
+
+	<select id="mhsalTotal" resultType="int">
+		SELECT Count(*) FROM emp where not (DELCHECK=1)
+	</select>
+	
+		<select id="mhempTotal" parameterType="Sal" resultType="Sal">
+<![CDATA[
+  SELECT *
+  FROM (
+    SELECT rownum AS rn, emp_dept.*
+    FROM (
+      SELECT e.empno, e.name, e.grade, e.deptno, e.hiredate, d.deptName, e.bank
+      FROM emp e
+      LEFT JOIN dept d ON e.deptno = d.deptno
+      WHERE e.DELCHECK != 1 
+      ORDER BY e.empno
+    ) emp_dept
+    WHERE rownum <= #{end}
+  )
+  WHERE rn >= #{start}
+]]>
+
+
+
+	</select>
+	
+	<select id="mhsalDList" parameterType="int" resultType="Sal">
+   		 SELECT * FROM sal WHERE empno = #{empno} and salnum = (select max(salnum) from sal)
+	</select>
+	
+	<select id="mhshemp" parameterType="Sal" resultType="Sal">
+	 WITH RankedSal AS (
+	    SELECT s.*, 
+	           ROW_NUMBER() OVER (PARTITION BY s.empno ORDER BY s.salnum DESC) AS rn
+	    FROM sal s
+	)
+	SELECT 
+	    e.*, d.*, rs.*
+	FROM 
+	    emp e
+	LEFT JOIN 
+	    dept d ON e.deptno = d.deptno
+	LEFT JOIN 
+	    RankedSal rs ON e.empno = rs.empno
+	WHERE 
+	    e.empno = #{empno} 
+	    AND rs.rn = 1
+
+	</select>
+
+	<select id="mhsetTotalEmp" parameterType="Sal" resultType="Sal">
+   		   <![CDATA[
+  SELECT *
+  FROM (
+    SELECT rownum AS rn, emp_dept.*
+    FROM (
+      SELECT e.empno, e.name, e.grade, e.deptno, e.hiredate, d.deptName
+      FROM emp e
+      LEFT JOIN dept d ON e.deptno = d.deptno
+      ORDER BY e.empno
+  ]]> 
+	</select>
+
+<select id="mhEmpSearchList" parameterType="Sal" resultType="Sal">
+    select * 
+    from emp e 
+    LEFT JOIN dept d ON e.deptno = d.deptno
+    LEFT JOIN sal s ON e.empno = s.empno
+    <choose>
+        <when test="search == 'seartchEmpno'">
+            where  e.empno like '%'|| #{keyword} || '%' and e.DELCHECK != 1 
+        </when>
+        <when test="search == 'seartchDet'">
+            where d.deptName like '%'|| #{keyword} || '%' and e.DELCHECK != 1 
+        </when>
+        
+        <when test="search == 'seartchName'">
+            where e.name like '%'|| #{keyword} || '%' and e.DELCHECK != 1 
+        </when>
+        
+                <when test="search == 'seartchsalnum'">
+            where s.salnum like '%'|| #{keyword} || '%' and e.DELCHECK != 1 
+        </when>
+        <otherwise>
+            where e.grade like '%'|| #{keyword} || '%' and e.DELCHECK != 1 
+        </otherwise>
+    </choose>
+    ORDER BY e.empno 
+</select>
+
+<select id="mhempSearchListSet" parameterType="Sal" resultType="Sal">
+    select * 
+    from emp e 
+    LEFT JOIN dept d ON e.deptno = d.deptno
+    <choose>
+        <when test="search == 'seartchEmpno'">
+            where  e.empno like '%'|| #{keyword} || '%' and e.DELCHECK != 1 
+        </when>
+        <when test="search == 'seartchDet'"> 
+            where d.deptName like '%'|| #{keyword} || '%' and e.DELCHECK != 1 
+        </when>
+        
+        <when test="search == 'seartchName'">
+            where e.name like '%'|| #{keyword} || '%'  and e.DELCHECK != 1 
+        </when>
+        <otherwise>
+            where e.grade like '%'|| #{keyword} || '%'  and e.DELCHECK != 1 
+        </otherwise>
+    </choose>
+    ORDER BY e.empno 
+</select>
+
+<select id="mhfindSalDate" resultType="String">
+	select saldate from sal where salnum = (select max(salnum) from sal)and rownum=1
+
+</select>
+
+<update id="mhupdateSal" parameterType="Sal">
+    UPDATE sal 
+    SET salbase = #{salBase}, 
+        salfood = #{salFood}, 
+        salbonus = #{salBonus}, 
+        salnight = #{salNight}, 
+        saltotal = #{salBase}+#{salFood}+#{salBonus}+#{salNight}, 
+        taxsum = saltotal*0.1, 
+        salfinal = saltotal - taxsum , 
+        tax = saltotal*0.1
+    WHERE empno = #{empno} AND salnum = (select max(salnum) from sal)
+
+</update>
+
+<select id="mhmSalList" parameterType="Sal" resultType="Sal">
+	SELECT 
+	    e.*, 
+	    d.*, 
+	    s.*
+	FROM 
+	    emp e
+	LEFT JOIN 
+	    dept d ON e.deptno = d.deptno
+	LEFT JOIN 
+	    sal s ON e.empno = s.empno
+	    
+	    where salnum = (select max(salnum) from sal)ORDER BY 
+	    e.empno
+
+</select>
+
+<select id="mhgetSalNum" resultType="String">
+	select salnum from sal where salnum = (select max(salnum) from sal)and rownum=1
+
+</select>
+
+<update id="mhsubmitDate" parameterType="int">
+    UPDATE sal
+    SET saldate = TO_DATE(TO_CHAR(TO_DATE(saldate, 'YYYY-MM-DD'), 'YY/MM') || '-${day}', 'YY/MM/DD')
+    WHERE salnum = (SELECT MAX(salnum) FROM sal)
+
+</update>
+
+<insert id="mhinsertSal" parameterType="int">
+	INSERT INTO sal (EMPNO, SALNUM, SALBASE, SALFOOD, SALBONUS, SALNIGHT, SALTOTAL, TAXSUM, SALFINAL, SALDATE, TAX, EDITOR, INPUTDATE)
+	SELECT EMPNO, 
+	       (SELECT MAX(SALNUM) + 1 FROM sal),
+	       SALBASE, 
+	       SALFOOD, 
+	       SALBONUS, 
+	       SALNIGHT, 
+	       SALTOTAL, 
+	       TAXSUM, 
+	       SALFINAL, 
+	
+	       TO_CHAR(ADD_MONTHS(TO_DATE((SELECT MAX(SALDATE) FROM sal), 'YY/MM/DD'), 1), 'YY/MM/DD'), 
+	       TAX, 
+	       #{empno},  
+	       SYSDATE
+	FROM sal
+	WHERE salnum = (SELECT MAX(salnum) FROM sal)ORDER BY 
+	    empno
+</insert>
+
+<select id="mhjoinList" parameterType="map" resultType="map">
+	SELECT s.*, e.empno, e.name
+	FROM 
+	    emp e
+	LEFT JOIN 
+	    sal s ON e.empno = s.empno
+	WHERE 
+	    e.empno = #{empno} 
+	    AND s.salnum = #{salnum}
+  
+</select>
+
+<select id="mhsalNumList" parameterType="String" resultType="Sal">
+	SELECT salnum
+	FROM (
+	    SELECT salnum,
+	           ROW_NUMBER() OVER (PARTITION BY empno ORDER BY saldate DESC) AS rn
+	    FROM sal
+	    WHERE empno = #{empno}
+	) 
+	WHERE rn BETWEEN 1 AND 3
+
+</select>
+
+<update id="mhupdateBank" parameterType="map">
+
+    UPDATE emp
+    SET bank = #{selectedBank}, account = #{account}
+    WHERE empno = #{empno}
+
+</update>
+
+<select id="mhempSalempno" parameterType="int" resultType="int">
+
+    select empno from sal where empno = #{empno} and rownum =1
+
+</select>
+
+<select id="mhEmpSal" parameterType="Sal" resultType="Sal">
+
+    select empno,
+           salnum, 
+           salbase, 
+           salfood, 
+           salbonus, 
+           getNightSal(empno, salnum) salnight
+    from   sal 
+    where  empno  = #{empno} 
+    and    salnum = #{salNum}
+
+</select>
+
+<insert id="mhnewInsert" parameterType="Sal">
+	INSERT INTO sal (EMPNO, SALNUM, SALBASE, SALFOOD, SALBONUS, SALNIGHT, SALTOTAL, TAXSUM, SALFINAL, SALDATE, TAX, EDITOR, INPUTDATE)
+	VALUES(
+	       #{empno}, 
+	       (SELECT MAX(SALNUM) FROM sal),
+	       #{salBase}, 
+	       #{salFood}, 
+	       #{salBonus}, 
+	       #{salNight}, 
+	       #{salTotal}, 
+	       #{taxSum}, 
+	       #{salFinal}, 
+	       (SELECT MAX(SALDATE) FROM sal), 
+	       #{tax}, 
+	      #{empno},  
+	       SYSDATE
+	)
+</insert>
+
+<select id="mhovertimeSalList" parameterType="String" resultType="EmpDept">
+	SELECT 
+	    e.empno,
+	    e.name,
+	    e.grade,
+	    d.DEPTNAME,
+	   ROUND(
+	        (SUM(a.OVERTIME) * 
+	         (s.salbase / 209 * 1.5)), 
+	    0) AS overtimeSal, sum(a.overtime) as totalOvertime
+	FROM 
+	    emp e
+	LEFT JOIN 
+	    attendance a ON e.empno = a.empno 
+	LEFT JOIN 
+	    sal s ON e.empno = s.empno AND s.salnum = #{salnum}
+	LEFT JOIN 
+	    dept d ON e.deptno = d.deptno 
+	WHERE 
+	    to_char(to_date(workdate, 'yyyymmdd'), 'yyyymm') = #{salnum} OR a.workdate IS NULL
+	GROUP BY 
+	    e.empno, e.name, e.grade, d.DEPTNAME, s.salbase
+	ORDER BY 
+	    e.empno
+</select>
+<update id="mhupdateOvertimeSal" parameterType="Sal">
+	UPDATE   sal 
+	SET      salnight = #{salNight}
+	       , saltotal = #{salTotal}
+	       , tax      = #{taxSum}
+	       , taxsum   = #{taxSum}
+	       , salfinal = #{salFinal}
+	WHERE salnum = #{salNum}
+	AND   empno  = #{empno}
+</update>
+
+<select id="mhupdateProcOtSal" parameterType="Sal" statementType="CALLABLE">
+  {
+  		call    UpdateSalary(
+  				#{salNum   , mode=IN    , jdbcType=INTEGER}
+   		)
+   }
+</select>
+	
+</mapper>
+
+        

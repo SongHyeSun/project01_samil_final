@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.oracle.samil.HsDao.HsResDao">
+	<select id="hsResListAcc" parameterType="ResTotal" resultType="ResTotal">
+		SELECT  f.facilId,
+				f.facilType,
+				f.facilName,
+				r.resCode,
+				r.resStart,
+				r.resEnd,
+				r.resWriter,
+				r.resTel,
+				r.resRequest,
+				r.resState,
+				a.resAdId,
+				a.resDetail
+		FROM  reservation r
+		JOIN  facility f ON f.facilId=r.facilId
+		JOIN  facilApprove a ON a.resCode=r.resCode
+		WHERE r.resState=110
+		AND   r.resWriter=#{resWriter}
+		AND   r.resStart >= TRUNC(SYSDATE)  <!-- 오늘 날짜 이후의 예약만 선택 -->
+	</select>
+	
+	<select id="hsResListRej" parameterType="ResTotal" resultType="ResTotal">
+		SELECT  f.facilId,
+				f.facilType,
+				f.facilName,
+				r.resCode,
+				r.resStart,
+				r.resEnd,
+				r.resWriter,
+				r.resTel,
+				r.resRequest,
+				r.resState,
+				a.resAdId,
+				a.resDetail
+		FROM  reservation r
+		JOIN  facility f ON f.facilId=r.facilId
+		JOIN  facilApprove a ON a.resCode=r.resCode
+		WHERE r.resState=120
+		AND	  r.resWriter=#{resWriter}
+		AND   r.resStart >= TRUNC(SYSDATE)  <!-- 오늘 날짜 이후의 예약만 선택 -->
+	</select>
+	
+	<insert id="hsResAppInsert" parameterType="ResTotal">
+		INSERT INTO facilApprove(resCode,
+								 resAdId,
+								 resDetail)
+		VALUES (#{resCode},
+				#{resAdId},
+				#{resDetail})
+	</insert>
+
+	<update id="hsupdateResApp" parameterType="ResTotal">
+		UPDATE  reservation
+		SET		resState=#{resState}
+		WHERE 	resCode=#{resCode}
+	</update>
+</mapper>

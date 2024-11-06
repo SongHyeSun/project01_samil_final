@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace = "com.oracle.samil.Amodel.EmpMapper">
+	<select id="trEmpSelect" parameterType="string" resultType="Emp">
+		SELECT		*
+		FROM		emp
+		WHERE		empno = #{empno}
+	</select>
+	<select id="trSelectEmpCaptainList"  resultType="Emp">
+		SELECT		*
+		FROM		emp
+		WHERE		job = 110
+	</select>
+	<select id="trPasswordMatch"  resultType="String">
+		SELECT		passanswer
+		FROM		logininfo
+		WHERE		empno=#{empno} and password=#{password}
+	</select>
+	<select id="trFindPass" parameterType="LoginInfo" resultType="LoginInfo">
+		SELECT		*
+		FROM		logininfo
+		WHERE		passquiz = #{passQuiz} and passanswer=#{passAnswer} and empno=#{empno}
+	</select>
+	<select id="trSelectDept" resultType="Dept">
+		SELECT		*
+		FROM		dept
+	</select>
+	<select id="trInsertLoginInfo" parameterType="Emp" >
+		insert into logininfo ( empno, passquiz, password, passanswer) 
+		values (emp_seq.currval, 1, '1234', '검정')
+	</select>
+	<select id="trInsertEmp"  parameterType="Emp" >
+		insert	into emp ( empno, email, name, phone, deptno, grade, job, address, status, admin, image, hiredate, totalvacation, restvacation, account, bank, delcheck, recenteditor, recenteditdate)
+		 values	(emp_seq.nextval,#{email},#{name}, #{phone}, #{deptno},#{grade},#{job},#{address},100, 170, #{image}, #{hiredate}, 12, 12, #{account}, #{bank}, 0, #{recentEditor}, #{recentEditDate})
+	</select>
+	<select id="trSelectEmp" resultType="Emp">
+		SELECT		*
+		FROM		Emp
+		where delcheck = 0
+	</select>
+	<select id="trfindDeptByDeptno" resultType="Dept">
+		SELECT		*
+		FROM		Dept
+		where deptno = #{deptno}
+	</select>
+	<select id="trSelectEmpDept" resultType="EmpDept">
+		SELECT *
+		FROM emp
+		INNER JOIN dept
+		on emp.deptno = dept.deptno	
+		where delcheck = 0
+	</select>
+	<select id="trFindEmpDept"  parameterType="String"  resultType="EmpDept">
+		SELECT *
+		FROM emp
+		INNER JOIN dept
+		on emp.deptno = dept.deptno	
+		WHERE empno = #{emp1empno} and delcheck = 0
+	</select>
+	<select id="trUpdateEmp"  parameterType="Emp"  resultType="int">
+		UPDATE emp
+		SET phone = #{phone}, grade= #{grade}, job=#{job}, bank=#{bank}, account=#{account}, email=#{email}, address=#{address}, deptno=#{deptno}, recenteditor=#{recentEditor},recentEditDate=#{recentEditDate}, admin=#{admin}, image=#{image} 
+		WHERE empno = #{empno}
+	</select>
+	<select id="trUpdateOwnEmp"  parameterType="Emp"  resultType="int">
+		UPDATE emp
+		SET phone = #{phone}, bank=#{bank}, account=#{account}, address=#{address},  email=#{email}, recenteditor=#{recentEditor}, recentEditDate=#{recentEditDate} 
+		WHERE empno = #{empno}
+	</select>
+	<select id="trSearchEmpByKeyword"  parameterType="String"  resultType="EmpDept">
+		SELECT *
+		FROM emp  e 
+		INNER JOIN dept d 
+		ON e.deptno = d.deptno	
+		WHERE ${option} like  '%' || #{keyword} || '%' and delcheck = 0
+	</select>
+	<select id="trShowDeptMember"  parameterType="int"  resultType="EmpDept">
+		SELECT *
+		FROM emp  e 
+		INNER JOIN dept d 
+		ON e.deptno = d.deptno	
+		WHERE e.deptno = #{deptno} and delcheck = 0
+	</select>
+	<select id="trDeptUpdate"  parameterType="Dept">
+		UPDATE dept
+		SET deptname=#{deptName}, manager=#{manager}, depttel=#{depttel}
+		where deptno=#{deptno}
+	</select>
+	<select id="trClearDeptFromEmp"  parameterType="int">
+		UPDATE emp
+		SET deptno=132
+		where deptno=#{deptno}
+	</select>
+	<select id="trUpperDeptUpdate"  parameterType="int">
+		UPDATE dept
+		SET higherdeptno = (
+		SELECT higherdeptno
+		FROM dept
+		where deptno=#{deptno}
+		)
+		WHERE higherdeptno=#{deptno}
+	</select>
+	<select id="trDeleteDept"  parameterType="int">
+		DELETE dept
+		where deptno=#{deptno}
+	</select>
+	<select id="trInsertDept"  parameterType="Dept">
+		INSERT INTO DEPT (deptno, higherdeptno, manager, deptname ,depttel)
+		values (DEPT_SEQ.NEXTVAL,#{higherdeptno}, #{manager}, #{deptName}, #{depttel})
+	</select>
+	
+	<select id="tkEmpDeptListAll" parameterType="int" resultType="Emp">
+		SELECT *
+		FROM emp
+		WHERE deptno=#{deptno}
+	</select>
+	<select id="trDeleteEmp"  >
+		UPDATE emp
+		SET delcheck = 1 
+		where empno=#{empno}
+	</select>
+
+	<select id="hsEmpDeptListAll" parameterType="int" resultType="Emp">
+		SELECT *
+		FROM emp
+		WHERE deptno=#{deptno}
+	</select>
+
+	<select id="hsSelListAllEmpDept" parameterType="map" resultType="EmpDept">
+		SELECT	empno,
+				name,
+				grade
+		FROM emp
+		WHERE status !=140
+		AND	status != 150
+		<if test="deptno != null and deptno !=''">
+			AND deptno = #{deptno}
+		</if>
+		AND empno != #{empno}
+		AND name LIKE '%' || #{keyword} || '%'
+		ORDER BY empno
+	</select>
+	
+	<select id="hsEmpList" parameterType="int" resultType="Emp">
+		SELECT		*
+		FROM		emp
+		WHERE		empno = #{empno}
+		ORDER BY	grade, job
+	</select>
+	
+	<select id="trRandomMenu" parameterType="int" resultType="String">
+        SELECT foodname
+        FROM food
+        WHERE foodnumber=#{nextInt}
+    </select>
+</mapper>

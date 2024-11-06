@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+	<settings>
+		<setting name="jdbcTypeForNull" value="VARCHAR"/>
+	</settings>
+	<typeAliases>
+		<typeAlias alias="Emp"				type="com.oracle.samil.Amodel.Emp"/>
+		<typeAlias alias="Dept"				type="com.oracle.samil.Amodel.Dept"/>
+		<typeAlias alias="EmpDept"			type="com.oracle.samil.Adto.EmpDept"/>
+		<typeAlias alias="LoginInfo"		type="com.oracle.samil.Amodel.LoginInfo"/>
+		<typeAlias alias="Mail"				type="com.oracle.samil.Amodel.Mail"/>
+		<typeAlias alias="Attendance"		type="com.oracle.samil.Amodel.Attendance"/>
+		<typeAlias alias="LeaveDto"			type="com.oracle.samil.Adto.LeaveDto"/>
+		<typeAlias alias="Approval"			type="com.oracle.samil.Amodel.Approval"/>
+		<typeAlias alias="ApprovalLine"		type="com.oracle.samil.Amodel.ApprovalLine"/>
+		<typeAlias alias="CostDetails"		type="com.oracle.samil.Amodel.CostDetails"/>
+		<typeAlias alias="DocumentForm"		type="com.oracle.samil.Amodel.DocumentForm"/>
+		<typeAlias alias="FurloughDetails"	type="com.oracle.samil.Amodel.FurloughDetails"/>
+		<typeAlias alias="ApprovalDto"		type="com.oracle.samil.Adto.ApprovalDto"/>
+		<typeAlias alias="Sal"   			type="com.oracle.samil.Amodel.Sal"/>
+		<typeAlias alias="Card"  	 		type="com.oracle.samil.Amodel.Card"/>
+	 	<typeAlias alias="CardUse"  		type="com.oracle.samil.Amodel.CardUse"/>
+	 	<typeAlias alias="Cost"  	 		type="com.oracle.samil.Amodel.Cost"/>
+	 	<typeAlias alias="CostCode"   		type="com.oracle.samil.Amodel.CostCode"/>
+	 	<typeAlias alias="CostCodeCost"		type="com.oracle.samil.Adto.CostCodeCost"/>
+	 	<typeAlias alias="Utility"          type="com.oracle.samil.Amodel.Utility"/>
+		<typeAlias alias="Posts"			type="com.oracle.samil.Amodel.Posts"/>
+		<typeAlias alias="Event" 			type="com.oracle.samil.Amodel.Event"/>
+		<typeAlias alias="Attendee" 		type="com.oracle.samil.Amodel.Attendee"/>
+		<typeAlias alias="Reservation" 		type="com.oracle.samil.Amodel.Reservation"/>
+		<typeAlias alias="FacilApprove" 	type="com.oracle.samil.Amodel.FacilApprove"/>
+		<typeAlias alias="Facility" 		type="com.oracle.samil.Amodel.Facility"/>
+		<typeAlias alias="CalTotal" 		type="com.oracle.samil.Adto.CalTotal"/>
+		<typeAlias alias="ResTotal" 		type="com.oracle.samil.Adto.ResTotal"/>
+		<typeAlias alias="Chatroom"   		type="com.oracle.samil.Amodel.Chatroom"/>			
+		<typeAlias alias="JoinChat"   		type="com.oracle.samil.Amodel.JoinChat"/>	
+		<typeAlias alias="Message"   		type="com.oracle.samil.Amodel.Message"/>
+	</typeAliases>
+</configuration>

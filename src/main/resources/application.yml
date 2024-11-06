@@ -1,0 +1,48 @@
+server:
+  port: 8389
+# Oracle Connect
+spring:
+  datasource:
+   driver-class-name: oracle.jdbc.OracleDriver
+   url: jdbc:oracle:thin:@172.30.1.53/xe
+   username: samil
+   password: tiger
+  
+  # jpa Setting
+  jpa:
+   show-sql: true
+   hibernate:
+    ddl-auto: update
+    
+  # View Resolver
+  mvc:
+    view:
+      prefix: /WEB-INF/views/
+      suffix: .jsp
+  
+  # gmail Transfer
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: lse6583@gmail.com
+    password: cnqa svwv ptaj rgqy
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls.enable: true
+
+  # jsp 수정시 자동 F5
+  devtools:
+    livereload:
+      enabled: true
+          
+  # Mybatis
+mybatis:
+    config-location: classpath:configuration.xml
+    mapper-locations: classpath:mappers/*.xml
+
+file:
+  path: C:\spring\samil\samil\src\main\resources\static
+  multipart:
+    enabled: true

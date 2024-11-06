@@ -1,0 +1,591 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.oracle.samil.SeDao.ApprovalDao">
+	<select id="allApp" resultType="int">
+		SELECT count(*) 
+		FROM Approval 
+		WHERE empno = #{empno}
+	</select>
+	
+	<select id="allAppList" parameterType="ApprovalDto" resultType="ApprovalDto">
+	    SELECT *
+	    FROM (
+	        SELECT 
+	            a.empno, 
+	            a.approvalTitle, 
+	            a.approvalCondition, 
+	            a.approvalDate, 
+	            a.approvalNum, 
+	            e.name, 
+	            df.documentFormId, 
+	            al.approvalCompleteDate, 
+	            e.deptno, 
+	            d.deptName,
+	            DENSE_RANK() OVER (PARTITION BY a.approvalNum, df.documentFormId ORDER BY 
+	                CASE 
+	                    WHEN al.approverOrder = 120 AND al.approvalCompleteDate IS NOT NULL THEN 1
+	                    WHEN al.approverOrder = 110 AND al.approvalCompleteDate IS NOT NULL THEN 2
+	                    ELSE 3
+	                END,
+	                a.approvalDate DESC) AS rn
+	        FROM Approval a
+	        LEFT JOIN Emp e ON a.empno = e.empno
+	        LEFT JOIN Dept d ON e.deptno = d.deptno
+	        LEFT JOIN DocumentForm df ON a.documentFormId = df.documentFormId 
+	        LEFT JOIN ApprovalLine al ON a.documentFormId = al.documentFormId AND a.approvalNum = al.approvalNum
+	        WHERE al.approverOrder IN (110, 120, 130)
+		AND a.empno = #{empno}
+	    ) subquery
+	    WHERE rn = 1
+	    AND rn BETWEEN #{start} AND #{end}
+	</select>
+	
+	<select id="condAllApp" parameterType="ApprovalDto" resultType="ApprovalDto">
+    	SELECT *
+	    FROM (
+	        SELECT a.empno, a.approvalTitle, a.approvalCondition, a.approvalDate, a.approvalNum, e.name, df.documentFormId, al.approvalCompleteDate,
+	               ROW_NUMBER() OVER (ORDER BY a.approvalNum DESC) as rn
+	        FROM Approval a
+	        LEFT JOIN Emp e ON a.empno = e.empno
+	        LEFT JOIN DocumentForm df ON a.documentFormId = df.documentFormId 
+	        LEFT JOIN ApprovalLine al ON a.documentFormId = al.documentFormId AND a.approvalNum = al.approvalNum
+	        WHERE al.approverOrder = (
+	            SELECT MAX(approverOrder)
+	            FROM ApprovalLine
+	            WHERE documentFormId = a.documentFormId AND approvalNum = a.approvalNum
+	        )
+	        AND a.empno = #{empno}
+	    ) subquery
+	    WHERE rn BETWEEN #{start} AND #{end}
+	</select>
+	
+	<select id="allAppListSearch" parameterType="ApprovalDto" resultType="ApprovalDto">
+    	SELECT a.rn, a.empno, a.approvalTitle, a.approvalCondition, e.name, a.approvalDate, a.approvalNum, df.documentFormId,al.approvalCompleteDate, ROW_NUMBER() OVER (ORDER BY a.approvalNum DESC) as rn
+	    FROM (
+	        SELECT rownum rn, a.empno, a.approvalTitle, a.approvalCondition, a.approvalDate, a.approvalNum, a.documentFormId
+	        FROM (
+	            SELECT a.empno, a.approvalTitle, a.approvalCondition, a.approvalDate, a.approvalNum, a.documentFormId  
+	            FROM Approval a
+	            <where>
+	                <choose>
+	                    <when test="search == 's_approvalTitle'">
+	                        a.approvalTitle like '%' || #{keyword} || '%'
+	                    </when>
+	                    <otherwise>
+	                        1=1
+	                    </otherwise>
+	                </choose>
+	            </where>
+	            ORDER BY a.approvalNum DESC
+	        ) a
+	    ) a 
+	    LEFT JOIN Emp e ON a.empno = e.empno
+	    LEFT JOIN DocumentForm df ON a.documentFormId = df.documentFormId
+	    LEFT JOIN ApprovalLine al ON a.documentFormId = al.documentFormId AND a.approvalNum = al.approvalNum
+	    <where>
+	        <choose>
+	            <when test="search == 's_name'">
+	                e.name like '%' || #{keyword} || '%'
+	            </when>
+	            <otherwise>
+	                1=1
+	            </otherwise>
+	        </choose>
+	        AND e.empno = #{empno}
+	        AND rn BETWEEN #{start} AND #{end}
+	    </where>
+	</select>
+	
+	<select id="finApp" resultType="int">
+		SELECT count(*) 
+		FROM Approval 
+		WHERE empno = #{empno}
+	 	AND ApprovalCondition IN (130,120)
+	</select>
+	
+	<select id="finAppList" parameterType="ApprovalDto" resultType="ApprovalDto">
+    	 SELECT *
+	    FROM (
+	        SELECT 
+	            a.empno, 
+	            a.approvalTitle, 
+	            a.approvalCondition, 
+	            a.approvalDate, 
+	            a.approvalNum, 
+	            e.name, 
+	            df.documentFormId, 
+	            al.approvalCompleteDate, 
+	            e.deptno, 
+	            d.deptName,
+	            DENSE_RANK() OVER (PARTITION BY a.approvalNum, df.documentFormId ORDER BY 
+	                CASE 
+	                    WHEN al.approverOrder = 120 AND al.approvalCompleteDate IS NOT NULL THEN 1
+	                    WHEN al.approverOrder = 110 AND al.approvalCompleteDate IS NOT NULL THEN 2
+	                    ELSE 3
+	                END,
+	                a.approvalDate DESC) AS rn
+	        FROM Approval a
+	        LEFT JOIN Emp e ON a.empno = e.empno
+	        LEFT JOIN Dept d ON e.deptno = d.deptno
+	        LEFT JOIN DocumentForm df ON a.documentFormId = df.documentFormId 
+	        LEFT JOIN ApprovalLine al ON a.documentFormId = al.documentFormId AND a.approvalNum = al.approvalNum
+	        WHERE al.approverOrder IN (110, 120, 130)
+	        AND a.approvalCondition IN (130, 120)
+		AND a.empno = #{empno}
+	    ) subquery
+	    WHERE rn = 1
+	    AND rn BETWEEN #{start} AND #{end}
+	</select>
+	
+	<select id="condfinApp" parameterType="ApprovalDto" resultType="int">
+	    SELECT COUNT(*)
+	    FROM (
+	        SELECT 
+	            a.*, 
+	            ROW_NUMBER() OVER (ORDER BY a.approvalDate DESC) rn
+	        FROM Approval a
+	        LEFT JOIN Emp e ON a.empno = e.empno
+	        LEFT JOIN DocumentForm df ON a.documentFormId = df.documentFormId 
+	        LEFT JOIN ApprovalLine al ON a.documentFormId = al.documentFormId AND a.approvalNum = al.approvalNum
+	        WHERE al.approverOrder = (
+	            SELECT MAX(approverOrder)
+	            FROM ApprovalLine
+	            WHERE documentFormId = a.documentFormId AND approvalNum = a.approvalNum
+	        )
+	        AND a.approvalCondition IN (130, 120)
+	        AND a.empno = #{empno}
+	    ) subquery
+	    WHERE rn BETWEEN #{start} AND #{end}
+	</select>
+	
+	<select id="finAppListSearch" parameterType="ApprovalDto" resultType="ApprovalDto">
+	    SELECT a.rn, a.empno, a.approvalTitle, a.approvalCondition, e.name, a.approvalDate, a.approvalNum, df.documentFormId, al.approvalCompleteDate, ROW_NUMBER() OVER (ORDER BY a.approvalNum DESC) as rn
+	    FROM (
+	        SELECT rownum rn, a.empno, a.approvalTitle, a.approvalCondition, a.approvalDate, a.approvalNum, a.documentFormId
+	        FROM (
+	            SELECT a.empno, a.approvalTitle, a.approvalCondition, a.approvalDate, a.approvalNum, a.documentFormId  
+	            FROM Approval a
+	            <where>
+	                <choose>
+	                    <when test="search == 's_approvalTitle'">
+	                        a.approvalTitle like '%' || #{keyword} || '%'
+	                    </when>
+	                    <otherwise>
+	                        1=1
+	                    </otherwise>
+	                </choose>
+	                AND ApprovalCondition IN (130,120)
+	            </where>
+	            ORDER BY a.approvalNum DESC
+	        ) a
+	    ) a 
+	    LEFT JOIN Emp e ON a.empno = e.empno
+	    LEFT JOIN DocumentForm df ON a.documentFormId = df.documentFormId
+	    LEFT JOIN ApprovalLine al ON a.documentFormId = al.documentFormId AND a.approvalNum = al.approvalNum
+	    <where>
+	        <choose>
+	            <when test="search == 's_name'">
+	                e.name like '%' || #{keyword} || '%'
+	            </when>
+	            <otherwise>
+	                1=1
+	            </otherwise>
+	        </choose>
+	        AND rn BETWEEN #{start} AND #{end}
+	        AND a.empno = #{empno}
+	    </where>
+	</select>
+	
+	<select id="stnApp" resultType="int">
+		SELECT count(*) 
+		FROM Approval
+		WHERE empno = #{empno}
+		AND ApprovalCondition IN (110,100) 
+	</select>
+	
+	<select id="stnAppList" parameterType="ApprovalDto" resultType="ApprovalDto">
+    	SELECT *
+	    FROM (
+	        SELECT 
+	            a.empno, 
+	            a.approvalTitle, 
+	            a.approvalCondition, 
+	            a.approvalDate, 
+	            a.approvalNum, 
+	            e.name, 
+	            df.documentFormId, 
+	            al.approvalCompleteDate, 
+	            e.deptno, 
+	            d.deptName,
+	            DENSE_RANK() OVER (PARTITION BY a.approvalNum, df.documentFormId ORDER BY 
+	                CASE 
+	                    WHEN al.approverOrder = 120 AND al.approvalCompleteDate IS NOT NULL THEN 1
+	                    WHEN al.approverOrder = 110 AND al.approvalCompleteDate IS NOT NULL THEN 2
+	                    ELSE 3
+	                END,
+	                a.approvalDate DESC) AS rn
+	        FROM Approval a
+	        LEFT JOIN Emp e ON a.empno = e.empno
+	        LEFT JOIN Dept d ON e.deptno = d.deptno
+	        LEFT JOIN DocumentForm df ON a.documentFormId = df.documentFormId 
+	        LEFT JOIN ApprovalLine al ON a.documentFormId = al.documentFormId AND a.approvalNum = al.approvalNum
+	        WHERE al.approverOrder IN (110, 120, 130)
+		AND a.empno = #{empno}
+		AND a.approvalCondition IN (100, 110)
+	    ) subquery
+	    WHERE rn = 1
+	    AND rn BETWEEN #{start} AND #{end}
+	</select>
+	
+	<select id="condStnApp" parameterType="ApprovalDto" resultType="int">
+	    SELECT COUNT(*)
+	    FROM (
+	        SELECT 
+	            a.*, 
+	            ROW_NUMBER() OVER (ORDER BY a.approvalDate DESC) rn
+	        FROM Approval a
+	        LEFT JOIN Emp e ON a.empno = e.empno
+	        LEFT JOIN DocumentForm df ON a.documentFormId = df.documentFormId 
+	        LEFT JOIN ApprovalLine al ON a.documentFormId = al.documentFormId AND a.approvalNum = al.approvalNum
+	        WHERE al.approverOrder = (
+	            SELECT MAX(approverOrder)
+	            FROM ApprovalLine
+	            WHERE documentFormId = a.documentFormId AND approvalNum = a.approvalNum
+	        )
+	        AND a.approvalCondition IN (110, 100)
+	        AND a.empno = #{empno}
+	    ) subquery
+	    WHERE rn BETWEEN #{start} AND #{end}
+	</select>
+
+	
+	<select id="stnAppListSearch" parameterType="ApprovalDto" resultType="ApprovalDto">
+	    SELECT a.rn, a.empno, a.approvalTitle, a.approvalCondition, e.name, a.approvalDate, a.approvalNum, df.documentFormId, al.approvalCompleteDate, ROW_NUMBER() OVER (ORDER BY a.approvalNum DESC) as rn
+	    FROM (
+	        SELECT rownum rn, a.empno, a.approvalTitle, a.approvalCondition, a.approvalDate, a.approvalNum, a.documentFormId
+	        FROM (
+	            SELECT a.empno, a.approvalTitle, a.approvalCondition, a.approvalDate, a.approvalNum, a.documentFormId  
+	            FROM Approval a
+	            <where>
+	                <choose>
+	                    <when test="search == 's_approvalTitle'">
+	                        a.approvalTitle like '%' || #{keyword} || '%'
+	                    </when>
+	                    <otherwise>
+	                        1=1
+	                    </otherwise>
+	                </choose>
+	                AND ApprovalCondition IN (110,100)
+	            </where>
+	            ORDER BY a.approvalNum DESC
+	        ) a
+	    ) a 
+	    LEFT JOIN Emp e ON a.empno = e.empno
+	    LEFT JOIN DocumentForm df ON a.documentFormId = df.documentFormId
+	    LEFT JOIN ApprovalLine al ON a.documentFormId = al.documentFormId AND a.approvalNum = al.approvalNum
+	    <where>
+	        <choose>
+	            <when test="search == 's_name'">
+	                e.name like '%' || #{keyword} || '%'
+	            </when>
+	            <otherwise>
+	                1=1
+	            </otherwise>
+	        </choose>
+	        AND rn BETWEEN #{start} AND #{end}
+	        AND a.empno = #{empno}
+	    </where>
+	</select>
+	
+	<select id="reqApp" resultType="int">
+		SELECT count(*) 
+		FROM	approval a
+	    JOIN	approvalLine al ON a.documentFormId = al.documentFormId AND a.approvalNum = al.approvalNum
+		WHERE al.empno = #{empno}
+		AND	  approvalCondition IN (100, 110)
+	</select>
+	
+	<select id="reqAppFin" resultType="int">
+		SELECT count(*) 
+		FROM	approval a
+	    JOIN	approvalLine al ON a.documentFormId = al.documentFormId AND a.approvalNum = al.approvalNum
+		WHERE  al.empno = #{empno}
+		AND	  approvalCondition IN (120, 130)
+	</select>
+	
+	<select id="requestApp" parameterType="ApprovalDto" resultType="ApprovalDto">
+	    SELECT	 
+				a.documentFormId, a.empno, e.name appName, a.approvalTitle, a.approvalDate, a.approvalCondition, a.approvalNum, al.approvalCompleteDate
+	    FROM	approval a
+	    JOIN	approvalLine al ON a.documentFormId = al.documentFormId AND a.approvalNum = al.approvalNum
+	    JOIN	emp e ON e.empno = a.empno
+	    WHERE	al.empno = #{empno}
+		AND		a.approvalCondition IN (100, 110)
+	</select>
+	
+	<select id="requestAppFin" parameterType="ApprovalDto" resultType="ApprovalDto">
+	    SELECT *
+			FROM (
+			    SELECT
+			        a.documentFormId,
+			        a.empno,
+			        e.name AS appName,
+			        a.approvalTitle,
+			        a.approvalDate,
+			        a.approvalCondition,
+			        a.approvalNum,
+			        al.approvalCompleteDate,
+			        ROW_NUMBER() OVER (ORDER BY a.approvalDate) AS rn
+			    FROM
+			        approval a
+			    JOIN
+			        approvalLine al ON a.documentFormId = al.documentFormId AND a.approvalNum = al.approvalNum
+			    JOIN
+			        emp e ON e.empno = a.empno
+			    WHERE
+			        al.empno = #{empno}
+			        AND a.approvalCondition IN (120, 130)
+			) 
+			WHERE rn BETWEEN #{start} AND #{end}
+	</select>
+	
+	<select id="adminApp" resultType="int">
+		SELECT count(*) FROM Approval
+	</select>
+	
+	<select id="adminAppList" parameterType="ApprovalDto" resultType="ApprovalDto">
+	    WITH RankedApprovals AS (
+		    SELECT 
+		        a.empno, 
+		        a.approvalTitle, 
+		        a.approvalCondition, 
+		        a.approvalDate, 
+		        a.approvalNum, 
+		        e.name, 
+		        df.documentFormId, 
+		        al.approvalCompleteDate, 
+		        e.deptno, 
+		        d.deptName,
+		        ROW_NUMBER() OVER (ORDER BY a.approvalDate DESC) AS rn
+		    FROM Approval a
+		    LEFT JOIN Emp e ON a.empno = e.empno
+		    LEFT JOIN Dept d ON e.deptno = d.deptno
+		    LEFT JOIN DocumentForm df ON a.documentFormId = df.documentFormId 
+		    LEFT JOIN ApprovalLine al ON a.documentFormId = al.documentFormId AND a.approvalNum = al.approvalNum
+		    WHERE al.approverOrder IN (110, 120, 130)
+		)
+		SELECT *
+		FROM RankedApprovals
+		WHERE rn BETWEEN #{start} AND #{end}
+	</select>
+
+
+	
+	<select id="adminAppListSearch" parameterType="ApprovalDto" resultType="ApprovalDto">
+	    SELECT a.rn, a.empno, a.approvalTitle, a.approvalCondition, e.name, a.approvalDate, a.approvalNum, d.deptname, al.approvalCompleteDate 
+	    FROM (
+	        SELECT rownum rn, a.empno, a.approvalTitle, a.approvalCondition, a.approvalDate, a.approvalNum, a.documentFormId
+	        FROM (
+	            SELECT a.empno, a.approvalTitle, a.approvalCondition, a.approvalDate, a.approvalNum, a.documentFormId
+	            FROM Approval a
+	            <where>
+	                <choose>
+	                    <when test="search == 's_approvalTitle'">
+	                        a.approvalTitle like '%' || #{keyword} || '%'
+	                    </when>
+	                    <when test="search == 's_approvalCondition'">
+	                        a.approvalCondition like '%' || #{keyword} || '%'
+	                    </when>
+	                    <otherwise>
+	                        1=1
+	                    </otherwise>
+	                </choose>
+	            </where>
+	            ORDER BY a.approvalNum DESC
+	        ) a
+	    ) a 
+	    LEFT JOIN Emp e ON a.empno = e.empno
+	    LEFT JOIN Dept d ON e.deptno = d.deptno
+	    LEFT JOIN ApprovalLine al ON a.documentFormId = al.documentFormId AND a.approvalNum = al.approvalNum
+	    <where>
+	        <choose>
+	            <when test="search == 's_name'">
+	                e.name like '%' || #{keyword} || '%'
+	            </when>
+	            <when test="search == 's_deptName'">
+	                d.deptname like '%' || #{keyword} || '%'
+	            </when>
+	            <otherwise>
+	                1=1
+	            </otherwise>
+	        </choose>
+	        AND rn BETWEEN #{start} AND #{end}
+	    </where>
+	</select>
+
+	
+    <select id="detailApp" parameterType="int" resultType="ApprovalDto">
+        SELECT a.*, 
+		       df.documentFormId, df.documentFormTitle, 
+		       e.name, d.deptname, e.grade, 
+		       fd.furloughStartDate, fd.furloughEndDate, 
+		       fd.furloughCnt, fd.furloughServiceData, 
+		       e.job
+		FROM Approval a
+		LEFT JOIN DocumentForm df ON a.documentFormId = df.documentFormId 
+		LEFT JOIN emp e ON a.empno = e.empno
+		LEFT JOIN dept d ON e.deptno = d.deptno
+		LEFT JOIN FurloughDetails fd ON a.approvalNum = fd.approvalNum AND a.documentFormId = fd.documentFormId
+		WHERE a.approvalNum = #{approvalNum} AND a.documentFormId = #{documentFormId}
+    </select>
+    
+    <select id="appLineList" parameterType="approvalLine" resultType="ApprovalDto">
+        SELECT al.approverOrder, al.documentFormId, al.approvalNum, al.approvalCompleteDate,
+	           al.approvalCnt, al.approvalType, e.name, e.grade, e.empno, e.job
+ 	    FROM   ApprovalLine al
+	    LEFT   JOIN emp e ON al.empno = e.empno
+	    WHERE  al.approvalNum = #{approvalNum} 
+	    AND     al.documentFormId = #{documentFormId}
+	    AND    (al.approverOrder IN (110, 120, 130) OR approverOrder >= 900)
+	    ORDER  BY al.approverOrder ASC
+  	</select>
+	
+	<select id="appCostList" resultType="CostDetails">
+	    SELECT *
+	    FROM CostDetails 
+	    WHERE approvalNum = #{approvalNum} 
+	    AND   documentFormId = #{documentFormId}
+	</select>
+
+	<update id="appUpdate" parameterType="ApprovalDto">
+	    UPDATE Approval
+	    SET 
+	        approvalTitle = #{approvalTitle}, 
+	        imageAttachment = #{imageAttachment, jdbcType=VARCHAR}
+	    WHERE 
+	        approvalNum = #{approvalNum}
+	</update>
+	
+	<update id="appUpdateFur" parameterType="ApprovalDto">
+	    UPDATE FurloughDetails
+	    SET 
+	        furloughStartDate = #{ furloughStartDate}, 
+	        furloughEndDate = #{furloughEndDate}, 
+	        furloughServiceData = #{furloughServiceData},
+	        furloughCnt = #{furloughCnt}
+	    WHERE 
+	        approvalNum = #{approvalNum}
+	</update>
+	
+	<update id="appUpdateCost" parameterType="ApprovalDto">
+	    UPDATE CostDetails
+	    SET 
+	        costDetailsCode = #{costDetailsCode}, 
+	        costDetailsCnt = #{costDetailsCnt},
+	        costAmount = #{costAmount}
+	    WHERE 
+	        approvalNum = #{approvalNum}
+	</update>
+	
+	<select id="allEmpDept" resultType="int">
+		SELECT * 
+		FROM emp e
+		LEFT JOIN dept d ON e.deptno = d.deptno  
+	</select>
+	
+	<select id="empDeptApp" resultType="EmpDept">
+		SELECT e.empno, e.name, e.grade, e.job, d.deptName, d.higherdeptno, d.deptdepth, d.deptno 
+		FROM emp e 
+		LEFT JOIN dept d ON e.deptno = d.deptno 
+		ORDER BY d.deptdepth ASC
+	</select>
+
+	<select id="appMaxnum"  parameterType="int"  resultType="int">
+		SELECT MAX(approvalNum)
+		FROM  approval
+		WHERE documentFormId =  #{documentFormId} 
+	</select>
+	
+	<insert id="appInsert" parameterType="Approval" >
+	    INSERT INTO approval 
+	    (
+	        documentFormId,
+	        approvalNum,
+	        empno,
+	        approvalTitle,
+	        approvalCondition,
+	        approvalDate,
+	        imageAttachment
+	    )
+	    VALUES 
+	    (
+	        #{documentFormId},
+	        (SELECT NVL(MAX(approvalNum),0)+1 FROM approval WHERE documentFormId = #{documentFormId}), 
+	        #{empno},
+	        #{approvalTitle},
+	        100,
+	        #{approvalDate},
+	        #{imageAttachment, jdbcType=VARCHAR}
+	    )
+	</insert>
+	
+	<insert id="approvalLineInsert" parameterType="Map">
+		INSERT INTO approvalLine (documentFormId, approvalNum, approverOrder, empno, approvalCompleteDate, approvalCnt, approvalType)
+		VALUES (#{documentFormId}, #{approvalNum}, #{approverOrder}, #{empno}, #{approvalCompleteDate, jdbcType=VARCHAR}, #{approvalCnt, jdbcType=VARCHAR}, 100)
+	</insert>
+	
+	<insert id="appInsertFur" parameterType="ApprovalDto">
+		INSERT INTO furloughDetails (documentFormId, approvalNum, furloughDetailsCode, furloughStartDate , furloughEndDate , furloughServiceData , furloughCnt )
+		VALUES (#{documentFormId}, #{approvalNum}, #{furloughDetailsCode}, #{furloughStartDate, jdbcType=DATE}, #{furloughEndDate, jdbcType=DATE}, #{furloughServiceData}, #{furloughCnt})
+	</insert>
+	
+	<insert id="appInsertCost" parameterType="CostDetails">
+	    INSERT INTO costDetails (documentFormId, approvalNum, costDetailsCode, costDetailsCnt, costAmount)
+	    VALUES (#{documentFormId}, #{approvalNum}, #{costDetailsCode}, #{costDetailsCnt}, #{costAmount})
+	</insert>
+	
+	<delete id="deleteFurloughDetails">
+		DELETE FROM FurloughDetails 
+		WHERE approvalNum = #{approvalNum}
+    </delete>
+
+	<delete id="deleteCostDetails">
+		DELETE FROM CostDetails 
+		WHERE approvalNum = #{approvalNum}
+    </delete>
+
+	<delete id="deleteApprovalLine">
+		DELETE FROM ApprovalLine 
+		WHERE approvalNum = #{approvalNum}
+    </delete>
+
+	<delete id="deleteApproval">
+		DELETE FROM Approval 
+		WHERE approvalNum = #{approvalNum} 
+		AND documentFormId = #{documentFormId}
+    </delete>
+    
+    <update id="appLineUpdate" parameterType="ApprovalDto">
+	    UPDATE ApprovalLine
+	    SET 
+	        approvalType = #{approvalType}, 
+	        approvalCnt = #{approvalCnt, jdbcType=VARCHAR}, 
+	        approvalCompleteDate = #{approvalCompleteDate}
+	    WHERE approvalNum = #{approvalNum}
+	    AND   documentFormId = #{documentFormId}
+	    AND empno = #{empno}
+	    AND approverOrder = #{approverOrder}
+	</update>
+    
+    <update id="appClick" parameterType="ApprovalDto">
+	    UPDATE Approval
+	    SET 
+	          approvalCondition = #{approvalCondition}
+	    WHERE approvalNum = #{approvalNum}
+	    AND   documentFormId = #{documentFormId}
+	</update>
+    
+    
+</mapper>
+

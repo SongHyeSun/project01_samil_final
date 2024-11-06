@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.oracle.samil.HsDao.HsFacilDao">
+	<resultMap type="Facility" id="FacilResult">
+		<result property="facilId" 			column="facilId"/>
+		<result property="facilType" 		column="facilType"/>
+		<result property="facilName" 		column="facilName"/>
+	</resultMap>
+
+	<select id="hsFacilSort" resultType="ResTotal">
+		SELECT *
+		FROM facility
+		ORDER BY facilId
+	</select>
+	
+	<select id="hsFacSelOne" parameterType="int" resultType="Facility">
+		SELECT *
+		FROM facility
+		WHERE facilId=#{facilId}
+	</select>
+	
+	<insert id="hsFacilInsert" parameterType="Facility">
+		INSERT INTO facility (facilId, 
+							  facilType,
+							  facilName)
+		VALUES(facil_seq.nextval, 
+			   #{facilType},
+			   #{facilName})
+	</insert>
+	
+	<update id="hsupdateFacil" parameterType="Facility">
+		UPDATE  facility
+		SET		facilId=#{facilId},
+				facilType=#{facilType},
+				facilName=#{facilName}
+		WHERE	facilId=#{facilId}
+	</update>
+	
+	<delete id="hsFacilDelete" parameterType="int">
+		DELETE FROM facility
+		WHERE facilId=#{facilId}
+	</delete>
+</mapper>

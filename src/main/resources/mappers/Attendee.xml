@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.oracle.samil.HsDao.HsCalDao">
+	<select id="hsReqAttList" parameterType="CalTotal" resultType="CalTotal">
+		SELECT  e.name,
+				e.empno,
+				c.eventTitle,
+				c.eventWriter,
+				c.eventStartdate,
+				c.eventEnddate,
+				c.eventCategory,
+				c.eventMemo,
+				c.eventLoc,
+				c.eventDelete,
+				a.attendRes,
+				a.attendRsvp,
+				a.attendId,
+				a.eventId
+		FROM event c
+		JOIN attendee a ON c.eventId=a.eventId
+		JOIN emp e ON c.eventWriter=e.empno
+		WHERE a.attendRes = 100
+		AND a.attendId=#{attendId}
+	</select>
+	
+	<update id="hsAttAccupdate" parameterType="Attendee">
+		UPDATE  attendee 
+		SET		attendRes=#{attendRes}
+		WHERE 	eventId=#{eventId}
+		AND		attendId=#{attendId}
+	</update>
+	
+	<update id="hsAttRejupdate" parameterType="Attendee">
+		UPDATE  attendee 
+		SET		attendRes=#{attendRes}
+		WHERE 	eventId=#{eventId}
+		AND		attendId=#{attendId}
+	</update>
+	
+	<select id="hsResAttList" parameterType="CalTotal" resultType="CalTotal">
+		<![CDATA[
+			SELECT  e.name,
+					e.empno,
+					c.eventTitle,
+					c.eventStartdate,
+					c.eventEnddate,
+					c.eventCategory,
+					c.eventMemo,
+					c.eventLoc,
+					c.eventDelete,
+					a.attendRes,
+					a.attendRsvp,
+					a.attendId,
+					a.eventId
+			FROM event c
+			JOIN attendee a ON c.eventId=a.eventId
+			JOIN emp e ON a.attendId=e.empno
+			WHERE c.eventWriter=#{eventWriter}
+			AND   TRUNC(c.eventStartdate) >= TRUNC(SYSDATE)
+			ORDER BY c.eventId, e.empno
+		]]>
+	</select>
+	
+	<select id="hsCalList" resultType="CalTotal">
+		<![CDATA[
+			SELECT DISTINCT
+		        eventId,
+		        eventTitle,
+		        eventWriter,
+		        TO_char(eventStartdate, 'YYYY-MM-DD"T"HH24:MI:SS') eventStartdate,
+		        TO_char(eventEnddate, 'YYYY-MM-DD"T"HH24:MI:SS') eventEnddate,
+		        eventCategory,
+		        eventLoc,
+		        eventMemo,
+		        eventDelete
+		    FROM event
+		    WHERE eventDelete=100
+		    AND eventCategory=100
+	    ]]>
+	</select>
+	
+	<select id="hsCalShaList" parameterType="int" resultType="CalTotal">
+		<![CDATA[
+			SELECT DISTINCT
+		        e.eventId,
+		        e.eventTitle,
+		        e.eventWriter,
+		        TO_char(e.eventStartdate, 'YYYY-MM-DD"T"HH24:MI:SS') eventStartdate,
+		        TO_char(e.eventEnddate, 'YYYY-MM-DD"T"HH24:MI:SS') eventEnddate,
+		        e.eventCategory,
+		        e.eventLoc,
+		        e.eventMemo,
+		        e.eventDelete
+		    FROM event e
+		    Left JOIN attendee a ON e.eventId=a.eventId
+		    WHERE e.eventDelete=100
+		    AND e.eventCategory=110
+		    AND (e.eventWriter = #{empno} OR (a.attendId = #{empno} AND a.attendres=110))
+	    ]]>
+	</select>
+	
+	<select id="hsCalPriList" parameterType="int" resultType="CalTotal">
+		<![CDATA[
+			SELECT DISTINCT
+		        e.eventId,
+		        e.eventTitle,
+		        e.eventWriter,
+		       	TO_char(eventStartdate, 'YYYY-MM-DD"T"HH24:MI:SS') eventStartdate,
+		        TO_char(eventEnddate, 'YYYY-MM-DD"T"HH24:MI:SS') eventEnddate,
+		        e.eventCategory,
+		        e.eventLoc,
+		        e.eventMemo,
+		        e.eventDelete
+		    FROM event e
+		    WHERE e.eventDelete=100
+		    AND e.eventCategory=120
+		    AND e.eventWriter=#{empno}
+	    ]]>
+	</select>
+	
+	<select id="hsCalVacList" parameterType="int" resultType="CalTotal">
+		<![CDATA[
+			SELECT DISTINCT
+		        e.eventId,
+		        e.eventTitle,
+		        e.eventWriter,
+		        TO_char(e.eventStartdate, 'YYYY-MM-DD"T"HH24:MI:SS') eventStartdate,
+		        TO_char(e.eventEnddate, 'YYYY-MM-DD"T"HH24:MI:SS') eventEnddate,
+		        e.eventCategory,
+		        e.eventLoc,
+		        e.eventMemo,
+		        e.eventDelete
+		    FROM event e
+		    Left JOIN attendee a ON e.eventId=a.eventId
+		    WHERE e.eventDelete=100
+		    AND e.eventCategory=130
+		    AND (e.eventWriter = #{empno} OR (a.attendId = #{empno} AND a.attendres=110))
+	    ]]>
+	</select>
+	
+	<insert id="hsAttenInsert" parameterType="Attendee">
+		INSERT INTO attendee (eventId, attendId, attendRes, attendRsvp)
+		VALUES (#{eventId}, #{attendId}, #{attendRes}, #{attendRsvp})
+	</insert>
+</mapper>
